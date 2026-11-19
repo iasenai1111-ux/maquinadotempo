@@ -49,6 +49,12 @@
   #status{color:#aabad6;font-size:.9rem}
   @keyframes pop{0%{r:0}60%{r:14}100%{r:8}}
   circle.novo{animation:pop .7s ease-out}
+  @media (max-width:600px){
+    .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .kpi{padding:12px}.kpi b{font-size:2rem}
+    .grafico{overflow-x:auto}.grafico svg{display:block;min-width:960px}
+    .linha{grid-template-columns:1fr}
+  }
 </style>
 </head>
 <body>
@@ -88,7 +94,7 @@
     <div><label for="pais">País</label><input id="pais" type="text" maxlength="30" placeholder="Ex.: EUA"></div>
   </div>
   <label for="marco">O que aconteceu? (uma frase)</label>
-  <input id="marco" type="text" maxlength="140" placeholder="Ex.: Computador Deep Blue vence o campeão mundial de xadrez">
+  <input id="marco" type="text" maxlength="140" placeholder="Ex.: Deep Blue vence no xadrez">
   <label for="quem">Quem fez? (pessoa ou empresa)</label>
   <input id="quem" type="text" maxlength="60" placeholder="Ex.: IBM">
   <div class="linha">
@@ -124,10 +130,10 @@
   </div>
   <div class="caixa"><div id="ultimo">Esperando o primeiro marco...</div></div>
   <div class="caixa">
-    <svg id="linha" viewBox="0 0 1560 300" width="100%" role="img" aria-label="Linha do tempo dos marcos da IA"></svg>
+    <div class="grafico"><svg id="linha" viewBox="0 0 1560 300" width="100%" role="img" aria-label="Linha do tempo dos marcos da IA"></svg></div>
     <div class="leg" id="leg"></div>
   </div>
-  <div class="caixa"><svg id="barras" viewBox="0 0 1560 220" width="100%" role="img" aria-label="Marcos por década"></svg></div>
+  <div class="caixa"><div class="grafico"><svg id="barras" viewBox="0 0 1560 220" width="100%" role="img" aria-label="Marcos por década"></svg></div></div>
   <p id="status"></p>
 </section>
 
@@ -247,13 +253,13 @@ const A0 = 1945, A1 = 2030, X0 = 40, X1 = 1530, xAno = a => X0 + (a - A0) / (A1 
 let jaVistos = 0;
 function desenhar(dados){
   const val = dados.filter(o => o.ano >= 1940 && o.ano <= 2030);
-  $("kMarcos").textContent = dados.length;
-  $("kAlunos").textContent = new Set(dados.map(o => o.apelido.toLowerCase()).filter(Boolean)).size;
+  $("kMarcos").textContent = val.length;
+  $("kAlunos").textContent = new Set(val.map(o => o.apelido.toLowerCase()).filter(Boolean)).size;
   $("kDec").textContent = new Set(val.map(o => Math.floor(o.ano/10)*10).filter(x => x >= 1950 && x <= 2020)).size + "/8";
   const s = val.map(o => o.ano).sort((a,b) => a-b), n = s.length;
   $("kMed").textContent = n ? (n % 2 ? s[(n-1)/2] : (s[n/2-1] + s[n/2]) / 2).toString().replace(".", ",") : "–";
-  const u = dados[dados.length-1];
-  if (u) $("ultimo").innerHTML = `🆕 ${isNaN(u.ano) ? "?" : u.ano}: ${esc(u.marco)}<small>enviado por ${esc(u.apelido || "?")} · ${esc(u.pais)} · ${esc(u.tipo)}</small>`;
+  const u = val[val.length-1];
+  $("ultimo").innerHTML = u ? `🆕 ${u.ano}: ${esc(u.marco)}<small>enviado por ${esc(u.apelido || "?")} · ${esc(u.pais)} · ${esc(u.tipo)}</small>` : "Esperando o primeiro marco...";
   // linha do tempo
   const g = $("linha"); g.innerHTML = ""; const base = 250;
   el("line", { x1:X0, y1:base, x2:X1, y2:base, stroke:"#5b6f96", "stroke-width":3 }, g);
