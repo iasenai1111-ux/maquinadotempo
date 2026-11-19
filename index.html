@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Laboratório da Multidão</title>
+<style>
+  :root{--azul:#0B4FA8;--azul2:#083b7e;--laranja:#F28C28;--verde:#1f9d55;--roxo:#6c3483;--fundo:#f4f6fb;--texto:#1d2433;--cinza:#6b7280;--card:#fff;--borda:#dfe3ec}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--fundo);color:var(--texto)}
+  header{background:var(--azul);color:#fff;padding:14px 16px}
+  header .in{max-width:760px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;gap:12px}
+  header h1{margin:0;font-size:1.25rem}
+  header small{opacity:.85}
+  main{max-width:760px;margin:0 auto;padding:16px}
+  .card{background:var(--card);border:1px solid var(--borda);border-radius:14px;padding:20px;margin-bottom:16px}
+  h2{margin:0 0 8px;font-size:1.2rem;color:var(--azul)}
+  p{line-height:1.5}
+  label{display:block;font-weight:600;margin:14px 0 6px}
+  input[type=text],input[type=number]{width:100%;padding:12px;border:1px solid var(--borda);border-radius:10px;font-size:1.1rem}
+  button{font:inherit;cursor:pointer;border:0;border-radius:10px;padding:12px 16px;font-weight:600}
+  .pri{background:var(--azul);color:#fff}.pri:hover{background:var(--azul2)}
+  .sec{background:#e8eefb;color:var(--azul)}
+  .op{display:flex;gap:10px}.op button{flex:1}
+  .aviso{background:#fff7e0;border-left:4px solid #e0a800;padding:10px 12px;border-radius:8px;font-size:.92rem}
+  .erro{color:#c0392b;font-weight:600;min-height:1.2em;margin-top:8px}
+  .grande{font-size:1.35rem;font-weight:700;line-height:1.4}
+  #pote{display:block;margin:10px auto;max-width:100%;height:auto;background:#fff;border-radius:12px}
+  .contador{text-align:center;font-size:2rem;font-weight:800;color:var(--laranja)}
+  #relogio{height:220px;border-radius:16px;background:var(--azul);color:#fff;display:flex;align-items:center;justify-content:center;
+    font-size:1.6rem;font-weight:800;text-align:center;user-select:none;-webkit-user-select:none;cursor:pointer;touch-action:manipulation;padding:16px}
+  #relogio.rodando{background:var(--laranja)}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+  .kpi{background:var(--fundo);border-radius:10px;padding:14px;text-align:center}
+  .kpi b{display:block;font-size:1.6rem;color:var(--azul)}
+  .kpi span{font-size:.88rem;color:var(--cinza)}
+  .acoes{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.acoes button{flex:1;min-width:180px}
+  .oculto{display:none}
+  footer{text-align:center;color:var(--cinza);font-size:.8rem;padding:16px}
+  .rev h3{margin:18px 0 6px;color:var(--azul)}
+  .num-real{font-size:3.2rem;font-weight:900;color:var(--verde);text-align:center;margin:6px 0}
+</style>
+</head>
+<body>
+<header><div class="in"><div><h1>🫙 Laboratório da Multidão</h1><small>Fundamentos de IA e Análise de Dados · SENAI</small></div><small id="ola"></small></div></header>
+<main>
+
+<!-- TELA 1 -->
+<section id="t1" class="card">
+  <h2>1. Quem é você?</h2>
+  <label for="nome">Seu nome (aparece só aqui na sua tela)</label>
+  <input id="nome" type="text" maxlength="40" placeholder="Ex.: Ana">
+  <label for="apelido">Apelido para a turma (é ele que vai para o painel)</label>
+  <input id="apelido" type="text" maxlength="20" placeholder="Ex.: Raio, Pixel, Coruja">
+  <p class="aviso">🔒 O seu <b>nome não sai deste computador</b>. Para a turma vai só o <b>apelido</b>.</p>
+  <p>São <b>2 desafios rápidos</b>: um <b>pote</b> para você adivinhar quantos pontinhos tem, e um <b>relógio</b> sem ponteiros. Responda sozinho, sem conversar com os colegas.</p>
+  <div class="erro" id="e1"></div>
+  <button class="pri" onclick="irAncora()">Começar ➜</button>
+</section>
+
+<!-- TELA 2: pergunta âncora -->
+<section id="t2" class="card oculto">
+  <h2>2. Desafio do pote</h2>
+  <p>Daqui a pouco você vai ver um <b>pote cheio de pontinhos</b> por <b>15 segundos</b>. Antes, responda rápido:</p>
+  <p class="grande" id="perguntaAncora"></p>
+  <div class="op"><button class="sec" onclick="ancora('Mais')">Mais</button><button class="sec" onclick="ancora('Menos')">Menos</button></div>
+</section>
+
+<!-- TELA 3: pote -->
+<section id="t3" class="card oculto">
+  <h2>Olhe o pote!</h2>
+  <div class="contador" id="contador">15</div>
+  <canvas id="pote" width="520" height="600" aria-label="Pote com pontinhos"></canvas>
+</section>
+
+<!-- TELA 4: chute -->
+<section id="t4" class="card oculto">
+  <h2>Quantos pontinhos tinha no pote?</h2>
+  <p>Não dá para contar: é um <b>chute</b>. Escreva o número que você acha.</p>
+  <input id="chute" type="number" min="1" step="1" placeholder="Seu chute">
+  <div class="erro" id="e4"></div>
+  <button class="pri" onclick="irRelogio()">Próximo desafio ➜</button>
+</section>
+
+<!-- TELA 5: relógio interno -->
+<section id="t5" class="card oculto">
+  <h2>3. Desafio do relógio interno ⏱️</h2>
+  <p>Toque em <b>COMEÇAR</b> e, sem olhar nenhum relógio, toque em <b>PARAR</b> quando achar que passaram <b>exatamente 30 segundos</b>. Vale uma tentativa só!</p>
+  <div id="relogio" onpointerdown="relogio(event)">COMEÇAR</div>
+</section>
+
+<!-- TELA 6: resultado -->
+<section id="t6" class="card oculto">
+  <h2 id="tituloRes">Pronto!</h2>
+  <div class="grid">
+    <div class="kpi"><b id="rChute"></b><span>Seu chute do pote</span></div>
+    <div class="kpi"><b id="rTempo"></b><span>Seus "30 segundos"</span></div>
+  </div>
+  <p id="fraseTempo"></p>
+  <p class="aviso">🤫 Quantos pontinhos tinha de verdade? O professor revela no telão, depois que todos responderem.</p>
+  <div class="acoes">
+    <button class="pri" id="btEnviar" onclick="enviarTurma()">📤 Enviar para a turma</button>
+    <button class="sec" onclick="baixarCSV()">⬇️ Baixar meus dados (CSV)</button>
+  </div>
+  <p class="aviso" id="avisoForm" style="margin-top:14px">O botão <b>Enviar para a turma</b> abre o formulário já preenchido. Confira e clique em <b>Enviar</b> lá no formulário.</p>
+  <p class="aviso oculto" id="semForm" style="margin-top:14px">O professor ainda não ligou o formulário. Use <b>Baixar meus dados</b> e entregue o arquivo.</p>
+</section>
+
+<!-- MODO REVELAÇÃO (professor): abra o link com ?revelar no final -->
+<section id="rev" class="card rev oculto">
+  <h2>🎉 A revelação</h2>
+  <canvas id="poteRev" width="520" height="600"></canvas>
+  <p style="text-align:center;margin:0">No pote tinha</p>
+  <p class="num-real" id="numReal"></p>
+  <h3>O segredo: a turma foi sorteada em 2 grupos</h3>
+  <p><b>Grupo A</b> viu a pergunta: <i>"O pote tem mais ou menos que <span class="ancA"></span> pontinhos?"</i><br>
+     <b>Grupo B</b> viu a pergunta: <i>"O pote tem mais ou menos que <span class="ancB"></span> pontinhos?"</i></p>
+  <p>Esse número não dava nenhuma dica. Mesmo assim, será que ele <b>puxou o chute</b> de cada grupo? Compare a mediana do grupo A com a do grupo B no painel. Isso se chama <b>efeito âncora</b>.</p>
+  <h3>E a turma toda junta?</h3>
+  <p>Em 1906, Galton juntou 787 palpites sobre o peso de um boi: a <b>mediana</b> errou menos de 1%. A mediana da turma chegou perto do valor real? Quantos alunos, sozinhos, chegaram mais perto que ela?</p>
+</section>
+
+</main>
+<footer>Os dados ficam só no seu navegador até você baixar ou enviar.</footer>
+
+<script>
+// ===== CONFIGURAÇÃO DO PROFESSOR =====
+// Link pré-preenchido do formulário, gerado com: Apelido = APELIDO · Grupo = GRUPO · Chute = 111 · Tempo = 222
+const LINK_FORMULARIO = "https://docs.google.com/forms/d/1ZUNinbSogTSOy8lL7ekVEsD57HSYiOzddBvmVjAU4c8/viewform?usp=pp_url&entry.1690358584=APELIDO&entry.1667979953=GRUPO&entry.2049085711=111&entry.1615666818=222";
+const TOTAL_PONTOS = 312;        // quantidade REAL de pontinhos no pote
+const ANCORA_A = 100, ANCORA_B = 900;
+// =====================================
+
+const d = { nome:"", apelido:"", grupo:"", ancoraResp:"", chute:null, tempo:null };
+const $ = id => document.getElementById(id);
+const telas = ["t1","t2","t3","t4","t5","t6","rev"];
+function mostra(id){ telas.forEach(t => $(t).classList.toggle("oculto", t !== id)); window.scrollTo(0,0); }
+
+// pote: sempre o mesmo desenho para todos (sorteio com semente fixa)
+function rng(seed){ return function(){ seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+  t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function desenhaPote(cv){
+  const c = cv.getContext("2d"), r = rng(2026), W = cv.width, H = cv.height;
+  c.clearRect(0,0,W,H);
+  const x0 = 70, x1 = W - 70, y0 = 110, y1 = H - 40;
+  c.fillStyle = "#eef4fb"; c.strokeStyle = "#8aa4c8"; c.lineWidth = 6;
+  c.beginPath(); c.moveTo(x0, y0); c.lineTo(x0, y1 - 30); c.quadraticCurveTo(x0, y1, x0 + 30, y1); c.lineTo(x1 - 30, y1);
+  c.quadraticCurveTo(x1, y1, x1, y1 - 30); c.lineTo(x1, y0); c.closePath(); c.fill(); c.stroke();
+  c.fillStyle = "#b23a3a"; c.fillRect(x0 - 12, y0 - 46, (x1 - x0) + 24, 40);
+  const cores = ["#e74c3c","#f39c12","#27ae60","#2980b9","#8e44ad","#d35400","#16a085","#c0392b"];
+  const pts = []; let tent = 0;
+  while (pts.length < TOTAL_PONTOS && tent < 200000) {
+    tent++; const x = x0 + 16 + r() * (x1 - x0 - 32), y = y0 + 20 + r() * (y1 - y0 - 36);
+    if (pts.every(p => (p.x - x) ** 2 + (p.y - y) ** 2 > 15 * 15)) pts.push({ x, y });
+  }
+  pts.forEach((p, i) => { c.beginPath(); c.arc(p.x, p.y, 7, 0, Math.PI * 2); c.fillStyle = cores[i % cores.length]; c.fill(); });
+  return pts.length;
+}
+
+function irAncora(){
+  d.nome = $("nome").value.trim(); d.apelido = $("apelido").value.trim();
+  if (!d.apelido) { $("e1").textContent = "Escolha um apelido."; return; }
+  if (d.nome && d.apelido.toLowerCase().includes(d.nome.toLowerCase().split(" ")[0])) { $("e1").textContent = "O apelido não pode ter o seu nome."; return; }
+  // sorteio do grupo (fica guardado para não mudar se recarregar a página)
+  try { d.grupo = sessionStorage.getItem("grupoMultidao") || ""; } catch(e) {}
+  if (!d.grupo) { d.grupo = Math.random() < 0.5 ? "A" : "B"; try { sessionStorage.setItem("grupoMultidao", d.grupo); } catch(e) {} }
+  const n = d.grupo === "A" ? ANCORA_A : ANCORA_B;
+  $("perguntaAncora").textContent = "Você acha que o pote tem mais ou menos que " + n + " pontinhos?";
+  $("ola").textContent = d.nome ? "Olá, " + d.nome + "!" : "";
+  mostra("t2");
+}
+function ancora(resp){
+  d.ancoraResp = resp; desenhaPote($("pote")); mostra("t3");
+  let s = 15; $("contador").textContent = s;
+  const iv = setInterval(() => { s--; $("contador").textContent = s; if (s <= 0) { clearInterval(iv); mostra("t4"); $("chute").focus(); } }, 1000);
+}
+function irRelogio(){
+  const v = parseInt($("chute").value, 10);
+  if (isNaN(v) || v < 1) { $("e4").textContent = "Escreva um número inteiro."; return; }
+  d.chute = v; mostra("t5");
+}
+let tIni = 0, rodando = false, feito = false;
+function relogio(ev){
+  ev.preventDefault(); if (feito) return; const el = $("relogio");
+  if (!rodando) { rodando = true; tIni = performance.now(); el.classList.add("rodando"); el.textContent = "PARAR quando achar que deu 30 s"; }
+  else {
+    feito = true; rodando = false; d.tempo = Math.round((performance.now() - tIni) / 100) / 10;
+    el.classList.remove("rodando"); el.textContent = "Registrado!"; setTimeout(resultado, 500);
+  }
+}
+function resultado(){
+  $("tituloRes").textContent = "Pronto" + (d.nome ? ", " + d.nome : "") + "!";
+  $("rChute").textContent = d.chute; $("rTempo").textContent = String(d.tempo).replace(".", ",") + " s";
+  const e = Math.abs(d.tempo - 30);
+  $("fraseTempo").textContent = e <= 2 ? "⏱️ Relógio suíço! Você errou só " + e.toFixed(1).replace(".", ",") + " s."
+    : d.tempo < 30 ? "⚡ Apressado! O seu tempo correu mais rápido que o relógio." : "🐢 Tranquilo! Você esperou mais que 30 segundos.";
+  const temForm = LINK_FORMULARIO.includes("entry.");
+  $("btEnviar").classList.toggle("oculto", !temForm); $("avisoForm").classList.toggle("oculto", !temForm); $("semForm").classList.toggle("oculto", temForm);
+  mostra("t6");
+}
+function baixarCSV(){
+  const data = new Date().toLocaleString("pt-BR");
+  const csv = "Apelido;Grupo;Resposta_ancora;Chute_pote;Tempo_30s;Data\n" +
+    [d.apelido, d.grupo, d.ancoraResp, d.chute, String(d.tempo).replace(".", ","), data].join(";") + "\n";
+  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+  a.download = "multidao_" + d.apelido.replace(/[^\w-]+/g, "_") + ".csv"; document.body.appendChild(a); a.click(); a.remove();
+}
+function enviarTurma(){
+  try {
+    const u = new URL(LINK_FORMULARIO), novos = new URLSearchParams();
+    for (const [k, v] of u.searchParams) {
+      if (v === "APELIDO") novos.append(k, d.apelido);
+      else if (v === "GRUPO") novos.append(k, d.grupo);
+      else if (v === "111") novos.append(k, d.chute);
+      else if (v === "222") novos.append(k, String(d.tempo).replace(".", ","));
+      else novos.append(k, v);
+    }
+    u.search = novos.toString(); window.open(u.toString(), "_blank");
+  } catch (e) { $("semForm").classList.remove("oculto"); }
+}
+// modo revelação para o telão: link com ?revelar
+if (location.search.includes("revelar")) {
+  const n = desenhaPote($("poteRev")); $("numReal").textContent = n;
+  document.querySelectorAll(".ancA").forEach(e => e.textContent = ANCORA_A);
+  document.querySelectorAll(".ancB").forEach(e => e.textContent = ANCORA_B);
+  mostra("rev");
+}
+</script>
+</body>
+</html>
