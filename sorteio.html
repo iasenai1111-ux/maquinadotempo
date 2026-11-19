@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%8E%B2%3C/text%3E%3C/svg%3E">
 <title>Sorteio das décadas · Máquina do Tempo da IA</title>
 <style>
   :root{--azul:#0B4FA8;--laranja:#F28C28;--fundo:#091b3a;--card:#12305f;--texto:#fff;--cinza:#aabad6}
@@ -53,7 +54,7 @@
     <input id="pote">
     <small class="d">Preenchido sozinho conforme o número de pessoas: todas as décadas entram uma vez, e as que sobram vão para as mais recentes (2020, 2010...), que têm mais marcos. Pode editar.</small>
     <div class="aviso oculto" id="avisoPote"></div>
-    <div class="acoes"><button class="sec" onclick="preparar()">✔ Preparar sorteio</button></div>
+    <div class="acoes"><button class="sec" id="btPreparar" onclick="preparar()">✔ Preparar sorteio</button></div>
   </section>
 
   <section>
@@ -79,7 +80,8 @@ const DECADAS = [1950,1960,1970,1980,1990,2000,2010,2020];
 const EXTRAS = [2020,2010,2020,2000,2010,2020,1990,2000,2010,2020,1980,1990];
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-let fila = [], pote = [], resultado = [], ocupado = false;
+let fila = [], pote = [], resultado = [], ocupado = false, emLote = false;
+function botoes(){ const ativo = !ocupado && !emLote; $("btPreparar").disabled = !ativo; $("btUm").disabled = $("btTodos").disabled = !(ativo && fila.length); $("btRefazer").disabled = !ativo || (!fila.length && !resultado.length); }
 
 function nomes(){ return $("nomes").value.split("\n").map(s => s.trim()).filter(Boolean); }
 function poteSugerido(n){
@@ -96,20 +98,28 @@ $("nomes").addEventListener("input", () => {
 });
 function embaralha(a){ for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 
+function falhou(texto){
+  fila = []; pote = []; resultado = []; desenharGrade(); botoes();
+  $("dec").textContent = "????"; $("msg").textContent = "";
+  const av = $("avisoPote"); av.textContent = texto; av.classList.remove("oculto");
+  $("quem").textContent = "Corrija ao lado e prepare de novo";
+}
 function preparar(){
-  if (ocupado) return;
+  if (ocupado || emLote) return;
   const ns = nomes();
-  const p = $("pote").value.split(/[,;\s]+/).map(x => parseInt(x, 10)).filter(x => x >= 1900 && x <= 2100);
   const av = $("avisoPote"); av.classList.add("oculto");
-  if (!ns.length) { $("quem").textContent = "Escreva os participantes ao lado"; return; }
+  const tokens = $("pote").value.split(/[,;\s]+/).filter(Boolean);
+  const ruins = tokens.filter(x => !/^\d{4}$/.test(x) || +x % 10 !== 0 || +x < 1940 || +x > 2020);
+  if (ruins.length) return falhou("Décadas inválidas no pote: " + ruins.join(", ") + ". Use só 1940, 1950 ... 2020.");
+  const p = tokens.map(Number);
+  if (!ns.length) return falhou("Escreva os participantes, um por linha.");
   const dup = ns.filter((x, i) => ns.findIndex(y => y.toLowerCase() === x.toLowerCase()) !== i);
-  if (dup.length) { av.textContent = "Nome repetido: " + dup.join(", ") + ". Diferencie (ex.: Ana B.)."; av.classList.remove("oculto"); return; }
-  if (p.length < ns.length) { av.textContent = `O pote tem ${p.length} décadas para ${ns.length} pessoas. Coloque pelo menos ${ns.length}.`; av.classList.remove("oculto"); return; }
+  if (dup.length) return falhou("Nome repetido: " + dup.join(", ") + ". Diferencie (ex.: Ana B.).");
+  if (p.length < ns.length) return falhou(`O pote tem ${p.length} décadas para ${ns.length} pessoas. Coloque pelo menos ${ns.length}.`);
   if (p.length > ns.length) { av.textContent = `Vão sobrar ${p.length - ns.length} décadas sem ninguém (tudo bem).`; av.classList.remove("oculto"); }
   fila = embaralha(ns.slice()); pote = embaralha(p.slice()).slice(0, ns.length); resultado = [];
   $("quem").textContent = "Pronto! " + ns.length + " para sortear"; $("dec").textContent = "????"; $("msg").textContent = "";
-  $("btUm").disabled = $("btTodos").disabled = false; $("btRefazer").disabled = false;
-  desenharGrade();
+  desenharGrade(); botoes();
 }
 function desenharGrade(){
   const usadas = [...new Set([...DECADAS, ...pote, ...resultado.map(r => r.d)])].sort((a, b) => a - b);
@@ -119,10 +129,10 @@ function desenharGrade(){
     return `<div class="dec"><b>${d}–${d + 9}</b>${q || '<span class="vagas">' + (total ? "aguardando" : "ninguém") + "</span>"}</div>`;
   }).join("");
 }
-function sortearUm(rapido){
+function sortearUm(rapido, doLote){
   return new Promise(res => {
-    if (ocupado || !fila.length) return res();
-    ocupado = true; $("btUm").disabled = $("btTodos").disabled = $("btRefazer").disabled = true;
+    if (ocupado || !fila.length || (emLote && !doLote)) return res();
+    ocupado = true; botoes();
     const nome = fila.shift(), d = pote.shift(), el = $("dec");
     $("quem").textContent = nome; $("msg").textContent = "viaja para...";
     el.className = "girando"; let t = 0; const giros = rapido ? 10 : 22;
@@ -131,14 +141,13 @@ function sortearUm(rapido){
       if (++t < giros) return setTimeout(roda, 40 + t * (rapido ? 6 : 9));
       el.className = ""; void el.offsetWidth; el.className = "caiu"; el.textContent = d;
       $("msg").textContent = `${d} a ${d + 9}` + (fila.length ? ` · faltam ${fila.length}` : " · terminou! 🎉");
-      resultado.push({ n: nome, d }); desenharGrade(); ocupado = false;
-      $("btRefazer").disabled = false; $("btUm").disabled = $("btTodos").disabled = !fila.length;
+      resultado.push({ n: nome, d }); desenharGrade(); ocupado = false; botoes();
       setTimeout(res, rapido ? 500 : 0);
     };
     roda();
   });
 }
-async function sortearTodos(){ while (fila.length) await sortearUm(true); }
+async function sortearTodos(){ if (emLote || ocupado) return; emLote = true; botoes(); while (fila.length) await sortearUm(true, true); emLote = false; botoes(); }
 desenharGrade();
 </script>
 </body>
